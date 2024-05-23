@@ -17,7 +17,7 @@ public class InfoPanel extends JPanel {
 
     public InfoPanel() {
         this.pointsSpent = 0;
-        this.accumulatedPoints = 200;
+        this.accumulatedPoints = 90;
         this.itemTakenLabel = new JLabel("你在____拿了____個____");
         this.itemProvidedLabel = new JLabel("你在____提供了____個____");
 
@@ -34,7 +34,7 @@ public class InfoPanel extends JPanel {
         idLabel = new JLabel("   ID: ");
         idLabel.setHorizontalAlignment(SwingConstants.LEFT);
         idLabel.setBounds(0, 16, 300, 40);
-		LvCombo = new JComboBox<>(new String[] { "Lv.1 可愛的人", "Lv.10 溫暖的人", "Lv.20 可愛的天使", "Lv.30 溫暖的天使", "Lv.40 可愛的神","Lv.50 溫暖的神" });
+		LvCombo = new JComboBox<>(new String[] { "Lv.1 可愛的人" });
 		leftUp = new JPanel(new BorderLayout());
         leftUp.setBounds(0, 16, 272, 40);
 		leftUp.add(LvCombo, BorderLayout.EAST);
@@ -162,6 +162,7 @@ public class InfoPanel extends JPanel {
                         ex.printStackTrace();
                     }
                 }
+                
 
                 String level = lastLine;
                 switch (level) {
@@ -170,30 +171,42 @@ public class InfoPanel extends JPanel {
                         textArea.append("Lv.10 溫暖的人");
                         accumulatedPoints -= 10;
                         historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.10 溫暖的人!\n");
+                        level="Lv.10 溫暖的人";
+                        LvCombo.addItem("Lv.10 溫暖的人");
                         break;
                     case "Lv.10 溫暖的人":
                         textArea.append("\n");
                         textArea.append("Lv.20 可愛的天使");
                         accumulatedPoints -= 20;
                         historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.20 可愛的天使!\n");
+                        level="Lv.20 可愛的天使";
+                        LvCombo.addItem("Lv.20 可愛的天使");
                         break;
                     case "Lv.20 可愛的天使":
                         textArea.append("\n");
                         textArea.append("Lv.30 溫暖的天使");
                         accumulatedPoints -= 30;
                         historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.30 溫暖的天使!\n");
+                        level="Lv.30 溫暖的天使";
+                        LvCombo.addItem("Lv.30 溫暖的天使");
+
                         break;
                     case "Lv.30 溫暖的天使":
                         textArea.append("\n");
                         textArea.append("Lv.40 可愛的神");
                         accumulatedPoints -= 40;
                         historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.40 可愛的神!\n");
+                        level="Lv.40 可愛的神";
+                        LvCombo.addItem("Lv.40 可愛的神");
+
                         break;
                     case "Lv.40 可愛的神":
                         textArea.append("\n");
                         textArea.append("Lv.50 溫暖的神");
                         accumulatedPoints -= 50;
                         historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.50 溫暖的神!\n");
+                        level="Lv.50 溫暖的神";
+                        LvCombo.addItem("Lv.50 溫暖的神");
                         break;
                 }
                 pointsLabel.setText("   累計點數: " + accumulatedPoints);
@@ -204,8 +217,32 @@ public class InfoPanel extends JPanel {
                 historyTextArea.append("xxx感謝了你!\n");
 
 
-                if (accumulatedPoints > 0) {
-                    levelUpButton.setEnabled(true);
+                switch (level) {
+                case "Lv.1 可愛的人":
+                    if (accumulatedPoints > 10) {
+                        levelUpButton.setEnabled(true);
+                    }
+                    break;
+                case "Lv.10 溫暖的人":
+                    if (accumulatedPoints > 20) {
+                        levelUpButton.setEnabled(true);
+                    }
+                    break;
+                case "Lv.20 可愛的天使":
+                    if (accumulatedPoints > 30) {
+                        levelUpButton.setEnabled(true);
+                    }
+                    break;
+                case "Lv.30 溫暖的天使":
+                    if (accumulatedPoints > 40) {
+                        levelUpButton.setEnabled(true);
+                    }
+                    break;
+                case "Lv.40 可愛的神":
+                    if (accumulatedPoints > 50) {
+                        levelUpButton.setEnabled(true);
+                    }
+                    break;
                 }
             }
         });
