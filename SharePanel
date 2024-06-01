@@ -1,0 +1,466 @@
+import javax.swing.*;
+import java.awt.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.LineBorder;
+import java.awt.event.ActionListener;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.awt.event.ActionEvent;
+
+public class SharePanel extends JPanel {
+
+	private User user;
+
+	private JPanel Panel, helpPanel, infoPanel, choosePanel, labelPanel;
+	private JLabel placeLabel, itemLabel, quantityLabel;
+	private JComboBox<String> placeCombo, itemCombo, quantityCombo;
+	private JButton offerBtn, takeBtn, needBtn, confirmBtn;
+	private static JTextArea AreaA, AreaB;
+
+	// constructor
+	public SharePanel(User u) {
+
+		this.user = u;
+
+		Panel = new JPanel();
+		Panel.setPreferredSize(new Dimension(730, 350));
+
+		AreaA = new JTextArea(20, 12);
+		AreaA.setBounds(149, 33, 224, 208);
+		AreaA.setEditable(false);
+		AreaA.setBorder(new CompoundBorder(new LineBorder(new Color(0, 0, 0)), null)); // 添加一个空边框
+
+		AreaB = new JTextArea(20, 12);
+		AreaB.setBounds(385, 33, 344, 208);
+		AreaB.setEditable(false);
+		AreaB.setBorder(new LineBorder(new Color(17, 15, 16))); // 添加一个空边框
+
+		// Instantiate components
+		placeLabel = new JLabel("Place:");
+		itemLabel = new JLabel("item:");
+		quantityLabel = new JLabel("Quantity:");
+
+		createBtn();
+		createCom();
+		createLayout();
+		setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+		add(Panel);
+
+	}
+
+	private void createLayout() {
+
+	    choosePanel = new JPanel();
+	    choosePanel.setBounds(30, 6, 667, 46);
+	    choosePanel.add(placeLabel);
+	    choosePanel.add(placeCombo);
+	    choosePanel.add(confirmBtn);
+	    Panel.add(choosePanel);
+
+	    // Show item information
+	    infoPanel = new JPanel();
+	    infoPanel.setBounds(-58, 48, 755, 247);
+	    infoPanel.setLayout(null);
+
+	    JScrollPane scrollPaneA = new JScrollPane(AreaA);
+	    scrollPaneA.setBounds(149, 33, 224, 208);
+	    JScrollPane scrollPaneB = new JScrollPane(AreaB);
+	    scrollPaneB.setBounds(385, 33, 344, 208);
+
+	    infoPanel.add(scrollPaneA);
+	    infoPanel.add(scrollPaneB);
+	    Panel.add(infoPanel);
+
+	    labelPanel = new JPanel();
+	    labelPanel.setBounds(146, 6, 583, 26);
+
+	    infoPanel.add(labelPanel);
+
+	    labelPanel.setLayout(null);
+
+	    JLabel leftlabel = new JLabel("剩余物品：");
+	    leftlabel.setBounds(6, 0, 212, 26);
+	    labelPanel.add(leftlabel);
+	    JLabel needlabel = new JLabel("需求：");
+	    needlabel.setBounds(241, 0, 212, 26);
+	    labelPanel.add(needlabel);
+
+	    // Choose item, quantity, and action
+	    helpPanel = new JPanel();
+	    helpPanel.setBorder(new CompoundBorder());
+	    helpPanel.setBounds(71, 303, 626, 46);
+	    helpPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+	    helpPanel.add(itemLabel);
+	    helpPanel.add(itemCombo);
+	    helpPanel.add(quantityLabel);
+	    helpPanel.add(quantityCombo);
+	    helpPanel.add(offerBtn);
+	    helpPanel.add(takeBtn);
+	    helpPanel.add(needBtn);
+	    Panel.setLayout(null);
+	    Panel.add(helpPanel);
+	}
+
+
+	public static void showResultSet(ResultSet result, JTextArea area) throws SQLException {
+
+		ResultSetMetaData metaData = result.getMetaData();
+		int columnCount = metaData.getColumnCount();
+		String output = "";
+
+		if (area == AreaA) {
+			while (result.next()) {
+				for (int i = 1; i <= columnCount; i++) {
+					int amount = Integer.parseInt(result.getString(i));
+					switch (metaData.getColumnLabel(i).toString()) {
+					case "LPad": output += String.format("%-15s%15d\n", "日用型衛生棉", amount);break;
+						
+					case "NPad": output += String.format("%-15s%15d\n", "夜用型衛生棉", amount);break;
+						
+					case "Pads": output += String.format("%-15s%15d\n", "護墊", amount);break;
+												
+					case "Warmer": output += String.format("%-15s%15d\n", "暖暖包", amount); break;
+						
+					case "Med": output += String.format("%-15s%15d\n", "止痛藥", amount); break;
+						
+					}
+				}
+			}
+		}
+
+		else if (area == AreaB) {
+			
+			for (int i = 1; i <= columnCount; i++) {
+				output += String.format("%15s", metaData.getColumnLabel(i));
+			}
+			
+			output += "\n";
+			
+			while (result.next()) {
+				for (int i = 1; i <= columnCount; i++) {
+					
+					output += String.format("%15s", result.getString(i));
+				}
+				output += "\n";
+			}
+		}
+
+		area.setText(output);
+	}
+
+	private void createBtn() {
+
+		offerBtn = new JButton("Offer");
+		offerBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				try {
+					// Check connection
+					if (FP.conn.isClosed())
+						FP.conn = DBConnector.getConnection();
+					// Build Statement
+
+					String place = placeCombo.getSelectedItem().toString();
+					String item = "";
+
+					switch (itemCombo.getSelectedItem().toString()) {
+
+					case "日用型衛生棉":
+						item = "LPad";
+						break;
+					case "夜用型衛生棉":
+						item = "NPad";
+						break;
+					case "護墊":
+						item = "Pads";
+						break;
+					case "暖暖包":
+						item = "Warmer";
+						break;
+					case "止痛藥":
+						item = "Med";
+						break;
+
+					}
+
+					int quantity = Integer.parseInt(quantityCombo.getSelectedItem().toString());
+
+					Statement stat = FP.conn.createStatement();
+					String query = String.format("UPDATE Share\n" + "SET %s = %s + %d\n WHERE Place = '%s';", item,
+							item, quantity, place);
+
+					if (stat.execute(query)) {
+						ResultSet result1 = stat.getResultSet();
+						showResultSet(result1, AreaA);
+						// Close ResultSet
+						result1.close();
+					}
+					
+					
+					
+					//增加一列Offer的資料
+					String query2 = String.format(
+							"INSERT INTO Offer(ID, Place, Quantity, Thing) VALUES (%d,'%s',%d,'%s')",
+							Integer.parseInt(user.getID()), place, quantity,item );
+					if (stat.execute(query2)) {
+						ResultSet result2 = stat.getResultSet();
+						showResultSet(result2, AreaA);
+						// Close ResultSet
+						result2.close();
+					}	
+					
+					// Close Statement
+					stat.close();
+					// Close Connection
+					FP.conn.close();
+					
+					searchLeft();
+					
+					
+					if (FP.conn.isClosed())FP.conn = DBConnector.getConnection();
+							
+						stat = FP.conn.createStatement();
+						query = String.format("UPDATE Profile\n SET AccumulatedOffer = AccumulatedOffer + %d\n WHERE ID = '%s';", quantity, Integer.parseInt(user.getID()));
+						if(!stat.execute(query)) {
+							user.addAccumulatedOffer(quantity);
+						}
+						
+						
+					} catch (SQLException se) {
+					JOptionPane.showMessageDialog(null, se.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				}
+				
+				
+
+			}
+		});
+
+		takeBtn = new JButton("Take");
+		takeBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+				try {
+					// Check connection
+					if (FP.conn.isClosed())
+						FP.conn = DBConnector.getConnection();
+					// Build Statement
+
+					String place = placeCombo.getSelectedItem().toString();
+					String item = "";
+
+					switch (itemCombo.getSelectedItem().toString()) {
+					
+					//尋找到對應的title
+					case "日用型衛生棉":
+						item = "LPad";
+						break;
+					case "夜用型衛生棉":
+						item = "NPad";
+						break;
+					case "護墊":
+						item = "Pads";
+						break;
+					case "暖暖包":
+						item = "Warmer";
+						break;
+					case "止痛藥":
+						item = "Med";
+						break;
+
+					}
+
+					int quantity = Integer.parseInt(quantityCombo.getSelectedItem().toString());
+					
+					//更新該物品領取完的數量
+					Statement stat = FP.conn.createStatement();
+					String query = String.format("UPDATE Share\n" + "SET %s = %s - %d\n WHERE Place = '%s';", item,
+							item, quantity, place);
+					int check = 0;
+					
+					
+					try {
+						
+						if (FP.conn.isClosed())FP.conn = DBConnector.getConnection();
+						
+						// Build Statement
+						Statement stat1 = FP.conn.createStatement();
+						String checkQuery = String.format("SELECT %s FROM Share WHERE Place = '%s';", item, place);
+						
+						if (stat1.execute(checkQuery)) {
+							
+							ResultSet rs = stat1.getResultSet();
+							
+							if (rs.next()) {
+				                check = rs.getInt(item);
+				            }
+							// Close ResultSet
+							rs.close();
+						}  
+
+						// Close Statement
+						stat1.close();
+												
+					} catch (SQLException se) {
+						JOptionPane.showMessageDialog(null, se.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+					}
+					
+					//確認剩餘數量是否足夠拿
+					if(check >= quantity) {
+						user.changedCurrentTake(quantity);
+
+						if (stat.execute(query)) {
+							ResultSet result1 = stat.getResultSet();
+							showResultSet(result1, AreaA);
+							// Close ResultSet
+							result1.close();
+												
+						}
+						
+						//增加一列Take的資料
+						 String query2 = String.format(
+						            "INSERT INTO Take(ID, Place, Quantity, Thing) VALUES (%d,'%s',%d,'%s')",
+						            Integer.parseInt(user.getID()), place, quantity, item);
+						    if (stat.execute(query2)) {
+						        ResultSet result2 = stat.getResultSet();
+						        showResultSet(result2, AreaA);
+						        // Close ResultSet
+						        result2.close();
+						    }
+					
+					
+						// Close Statement
+						stat.close();
+						// Close Connection
+						FP.conn.close();
+					
+						searchLeft();
+
+					}else {
+						JOptionPane.showMessageDialog(null, "數量不夠了", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+					
+					
+				} catch (SQLException se) {
+					JOptionPane.showMessageDialog(null, se.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				}
+				
+			}
+		});
+
+		needBtn = new JButton("Need");
+		needBtn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+
+					if (FP.conn.isClosed())
+						FP.conn = DBConnector.getConnection();
+					// Build Statement
+
+					String place = placeCombo.getSelectedItem().toString();
+					String item = itemCombo.getSelectedItem().toString();
+
+					int quantity = Integer.parseInt(quantityCombo.getSelectedItem().toString());
+
+					Statement stat = FP.conn.createStatement();
+					String query = String.format(
+							"INSERT INTO Help(ID, Thing, Quantity, Place) VALUES (%d,'%s',%d,'%s')",
+							Integer.parseInt(user.getID()), item, quantity, place);
+					
+					
+					user.changedCurrentTake(quantity);
+					
+					if (stat.execute(query)) {
+						ResultSet result1 = stat.getResultSet();
+						showResultSet(result1, AreaB);
+						// Close ResultSet
+						result1.close();
+					}
+
+					// Close Statement
+					stat.close();
+					// Close Connection
+					FP.conn.close();
+
+					searchNeed();
+
+					
+				} catch (SQLException se) {
+					JOptionPane.showMessageDialog(null, se.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		});
+
+		confirmBtn = new JButton("Confirm");
+		confirmBtn.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				searchLeft();
+				System.out.print(user.getAccumulatedOffer());
+				System.out.print(user.getCurrentTake());
+
+			}
+		});
+	}
+
+	private void createCom() {
+		placeCombo = new JComboBox<>(new String[] { "綜院", "商院", "總圖", "達賢" });
+		itemCombo = new JComboBox<>(new String[] { "日用型衛生棉", "夜用型衛生棉", "護墊", "暖暖包", "止痛藥" });
+		quantityCombo = new JComboBox<>(new String[] { "1", "2", "3" });
+
+	}
+	
+	private void searchLeft() {
+		try {
+			// Check connection
+			if (FP.conn.isClosed())
+				FP.conn = DBConnector.getConnection();
+			// Build Statement
+			Statement stat = FP.conn.createStatement();
+			String selectedPlace = placeCombo.getSelectedItem().toString();
+			String query = "SELECT LPad, NPad, Pads, Warmer, Med FROM `Share` WHERE (Place = '" + selectedPlace
+					+ "');";
+			// Execute query
+			stat.execute(query);
+
+			if (stat.execute(query)) {
+				ResultSet result1 = stat.getResultSet();
+				showResultSet(result1, AreaA);
+				// Close ResultSet
+				result1.close();
+			}
+			// Close Statement
+			stat.close();
+			// Close Connection
+			FP.conn.close();
+		} catch (SQLException se) {
+			JOptionPane.showMessageDialog(null, se.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+	
+	private void searchNeed() {
+		try {
+			// Check connection
+			if (FP.conn.isClosed())
+				FP.conn = DBConnector.getConnection();
+			// Build Statement
+			Statement stat = FP.conn.createStatement();
+			String query = "SELECT * FROM `Help`;";
+			// Execute query
+
+			if (stat.execute(query)) {
+				ResultSet result1 = stat.getResultSet();
+				showResultSet(result1, AreaB);
+				// Close ResultSet
+				result1.close();
+			}
+			// Close Statement
+			stat.close();
+			// Close Connection
+			FP.conn.close();
+		} catch (SQLException se) {
+			JOptionPane.showMessageDialog(null, se.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+}
