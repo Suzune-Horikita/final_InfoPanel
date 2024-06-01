@@ -3,266 +3,477 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.sql.SQLException;
 
 public class InfoPanel extends JPanel {
 
-    private JPanel leftPanel, rightPanel, leftDown, leftUp;
-    private JLabel idLabel, takenLabel, providedLabel, pointsLabel, LvLabel;
-    private JButton levelUpButton;
-    private JTextArea textArea, historyTextArea;
-    private JLabel itemTakenLabel, itemProvidedLabel;
-    private int pointsSpent, accumulatedPoints;
-    private JPanel histroyPanel;
-    private JComboBox<String> LvCombo;
+	private User user;
+	private int thisTakeQuantity, thisOfferQuantity, currentTake, accumulatedOffer;
+	private String place, thing;
+	private JPanel leftPanel, rightPanel, leftDown, leftUp;
+	private JLabel idLabel, takenLabel, providedLabel, pointsLabel, LvLabel;
+	private JButton levelUpButton;
+	private JTextArea textArea, historyTextArea;
+	private JLabel itemTakenLabel, itemProvidedLabel;
+	private int accumulatedPoints;
+	private JPanel histroyPanel;
+	private JComboBox<String> LvCombo;
 
-    public InfoPanel() {
-        this.pointsSpent = 0;
-        this.accumulatedPoints = 90;
-        this.itemTakenLabel = new JLabel("你在____拿了____個____");
-        this.itemProvidedLabel = new JLabel("你在____提供了____個____");
+	public InfoPanel(User u) {
+		this.user = u;
+		this.accumulatedPoints = 90;
+		this.accumulatedOffer = u.getAccumulatedOffer();
+		this.currentTake = u.getCurrentTake();
+		this.itemProvidedLabel = new JLabel("你在____提供了____個____");
 
-        createLayout();
-        createBtn();
-    }
+		createLayout();
+		createBtn();
+	}
 
-    public void createLayout() {
-        setLayout(new GridLayout(0, 1, 0, 0));
+	public void createLayout() {
+		setLayout(new GridLayout(0, 1, 0, 0));
 
-        leftPanel = new JPanel();
-        leftPanel.setLayout(null);
+		leftPanel = new JPanel();
+		leftPanel.setLayout(null);
 
-        idLabel = new JLabel("   ID: ");
-        idLabel.setHorizontalAlignment(SwingConstants.LEFT);
-        idLabel.setBounds(0, 16, 300, 40);
-		LvCombo = new JComboBox<>(new String[] { "Lv.1 可愛的人" });
+		idLabel = new JLabel("   ID: " + user.getID());
+		idLabel.setHorizontalAlignment(SwingConstants.LEFT);
+		idLabel.setBounds(0, 16, 300, 40);
 		leftUp = new JPanel(new BorderLayout());
-        leftUp.setBounds(0, 16, 272, 40);
-		leftUp.add(LvCombo, BorderLayout.EAST);
-	    leftUp.add(idLabel, BorderLayout.WEST);        
-        leftPanel.add(leftUp);
+		leftUp.setBounds(0, 16, 232, 40);
+		leftUp.add(idLabel, BorderLayout.WEST);
+		leftPanel.add(leftUp);
+		
+		
+		switch(currentTake)  {
+        case 3:
+        	currentTake = 0;
+			break;
+		case 2:
+			currentTake = 1;
+			break;
+		case 1:
+			currentTake = 2;
+			break;
+		case 0:
+			currentTake = 3;
+			break;
+		}
+		takenLabel = new JLabel("   本次已取: "+currentTake+" 項用品");
+		takenLabel.setBounds(0, 108, 300, 55);
+		leftPanel.add(takenLabel);
 
-        takenLabel = new JLabel("   本次已取: ____ 項用品");
-        takenLabel.setBounds(0, 80, 300, 55);
-        leftPanel.add(takenLabel);
+		providedLabel = new JLabel("   總提供: "+ accumulatedOffer +" 項用品");
+		providedLabel.setBounds(0, 144, 300, 61);
+		leftPanel.add(providedLabel);
 
-        providedLabel = new JLabel("   總提供: ____ 項用品");
-        providedLabel.setBounds(0, 147, 300, 61);
-        leftPanel.add(providedLabel);
+		pointsLabel = new JLabel("   累計點數: " + accumulatedPoints);
+		pointsLabel.setBounds(0, 220, 300, 55);
 
-        pointsLabel = new JLabel("   累計點數: "+accumulatedPoints);
-        pointsLabel.setBounds(0, 220, 300, 55);
+		leftDown = new JPanel(new BorderLayout());
+		leftDown.setBounds(0, 250, 272, 40);
+		leftPanel.add(leftDown);
 
-        leftDown = new JPanel(new BorderLayout());
-        leftDown.setBounds(0, 250, 272, 40);
-        leftPanel.add(leftDown);
+		// 右邊面板
+		rightPanel = new JPanel();
+		rightPanel.setLayout(null);
 
-        
-        //右邊面板
-        rightPanel = new JPanel();
-        rightPanel.setLayout(null);
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new GridLayout(1, 2));
+		mainPanel.add(leftPanel);
+		LvCombo = new JComboBox<>(new String[] { "Lv.1 可愛的人" });
+		LvCombo.setBounds(6, 56, 138, 40);
+		leftPanel.add(LvCombo);
+		mainPanel.add(rightPanel);
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new GridLayout(1, 2));
-        mainPanel.add(leftPanel);
-        mainPanel.add(rightPanel);
+		JPanel achivePanel = new JPanel();
+		achivePanel.setBounds(6, 6, 288, 159);
+		rightPanel.add(achivePanel);
+		achivePanel.setLayout(null);
 
-        JPanel achivePanel = new JPanel();
-        achivePanel.setBounds(6, 6, 288, 159);
-        rightPanel.add(achivePanel);
-        achivePanel.setLayout(null);
+		JLabel lblNewLabel = new JLabel("成就牆:");
+		lblNewLabel.setBounds(0, 0, 288, 30);
+		achivePanel.add(lblNewLabel);
 
-        JLabel lblNewLabel = new JLabel("成就牆:");
-        lblNewLabel.setBounds(0, 0, 288, 30);
-        achivePanel.add(lblNewLabel);
+		textArea = new JTextArea();
+		textArea.setBounds(0, 31, 288, 127);
+		achivePanel.add(textArea);
+		
+		
+		String level = "Lv.1 可愛的人";  // Default level
+		try {
+			
+			    if (FP.conn.isClosed())
+			        FP.conn = DBConnector.getConnection();
 
-        textArea = new JTextArea();
-        textArea.setBounds(0, 31, 288, 127);
-        achivePanel.add(textArea);
-        textArea.append("Lv.1 可愛的人");
+			    Statement stat = FP.conn.createStatement();
+			    String query = "SELECT Level FROM `Profile` WHERE ID = " + user.getID();
 
-        histroyPanel = new JPanel();
-        histroyPanel.setBounds(10, 174, 288, 220);
-        rightPanel.add(histroyPanel);
-        histroyPanel.setLayout(null);
+			    ResultSet result = stat.executeQuery(query);
 
-        JLabel label = new JLabel("歷史紀錄:");
-        label.setBounds(0, 0, 288, 30);
-        histroyPanel.add(label);
+			    if (result.next()) {
+			        level = result.getString("Level");
+			    } else {
+			    	System.out.println("A");
+			        // No result, set default level in the database
+			    	String updateQuery = "UPDATE Profile SET Level = " + level + " WHERE ID = " + user.getID();
+	                stat.executeUpdate(updateQuery);
+	                textArea.append("Lv.1 可愛的人");
 
-        historyTextArea = new JTextArea();
-        historyTextArea.setTabSize(7);
-        historyTextArea.setEditable(false);
+			    }
+		    
+		        switch (level) {	
+		        	case "Lv.1 可愛的人":
+	                LvCombo.addItem("Lv.1 可愛的人");
+	                break;
+		            case "Lv.10 溫暖的人":
+		                textArea.append("Lv.1 可愛的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.10 溫暖的人");
+		                LvCombo.addItem("Lv.10 溫暖的人");
+		                break;
+		            case "Lv.20 可愛的天使":
+		                textArea.append("Lv.1 可愛的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.10 溫暖的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.20 可愛的天使");
+						LvCombo.addItem("Lv.10 溫暖的人");
+						LvCombo.addItem("Lv.20 可愛的天使");
 
-        JScrollPane scrollPane = new JScrollPane(historyTextArea);
-        scrollPane.setBounds(0, 28, 288, 192);
-        histroyPanel.add(scrollPane);
+		                break;
+		            case "Lv.30 溫暖的天使":
+		                textArea.append("Lv.1 可愛的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.10 溫暖的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.20 可愛的天使");
+		                textArea.append("\n");
+		                textArea.append("Lv.30 溫暖的天使");
+		                LvCombo.addItem("Lv.10 溫暖的人");
+						LvCombo.addItem("Lv.20 可愛的天使");
+						LvCombo.addItem("Lv.30 溫暖的天使");
+		                break;
+		            case "Lv.40 可愛的神":
+		                textArea.append("Lv.1 可愛的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.10 溫暖的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.20 可愛的天使");
+		                textArea.append("\n");
+		                textArea.append("Lv.30 溫暖的天使");
+		                textArea.append("\n");
+		                textArea.append("Lv.40 可愛的神");
+		                LvCombo.addItem("Lv.10 溫暖的人");
+						LvCombo.addItem("Lv.20 可愛的天使");
+						LvCombo.addItem("Lv.30 溫暖的天使");
+						LvCombo.addItem("Lv.40 可愛的神");
+							
+		                break;
+		            case "Lv.50 溫暖的神":
+		            	textArea.append("Lv.1 可愛的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.10 溫暖的人");
+		                textArea.append("\n");
+		                textArea.append("Lv.20 可愛的天使");
+		                textArea.append("\n");
+		                textArea.append("Lv.30 溫暖的天使");
+		                textArea.append("\n");
+		                textArea.append("Lv.40 可愛的神");
+		                textArea.append("\n");
+		                textArea.append("Lv.50 溫暖的神");	
+		                LvCombo.addItem("Lv.10 溫暖的人");
+						LvCombo.addItem("Lv.20 可愛的天使");
+						LvCombo.addItem("Lv.30 溫暖的天使");
+						LvCombo.addItem("Lv.40 可愛的神");
+						LvCombo.addItem("Lv.50 溫暖的神");
+						break;
+		        }		    
+		    
+		} catch (SQLException e1) {
+		    e1.printStackTrace();
+		}
 
-        add(mainPanel);
-        setVisible(true);
-    }
-
-    public void createBtn() {
-        levelUpButton = new JButton("Level up!");
-
-        levelUpButton.setEnabled(false);
-        int lineCount = textArea.getLineCount();
-        String lastLine = null;
-
-        if (lineCount > 0) {
-            try {
-                int endOffset = textArea.getLineEndOffset(lineCount - 1);
-                int startOffset = textArea.getLineStartOffset(lineCount - 1);
-                lastLine = textArea.getText(startOffset, endOffset - startOffset);
-            } catch (BadLocationException ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        String level = lastLine;
-        switch (level) {
-            case "Lv.1 可愛的人":
-                if (accumulatedPoints > 10) {
-                    levelUpButton.setEnabled(true);
-                }
-                break;
-            case "Lv.10 溫暖的人":
-                if (accumulatedPoints > 20) {
-                    levelUpButton.setEnabled(true);
-                }
-                break;
-            case "Lv.20 可愛的天使":
-                if (accumulatedPoints > 30) {
-                    levelUpButton.setEnabled(true);
-                }
-                break;
-            case "Lv.30 溫暖的天使":
-                if (accumulatedPoints > 40) {
-                    levelUpButton.setEnabled(true);
-                }
-                break;
-            case "Lv.40 可愛的神":
-                if (accumulatedPoints > 50) {
-                    levelUpButton.setEnabled(true);
-                }
-                break;
-        }
-
-        levelUpButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                levelUpButton.setEnabled(false);
-                int lineCount = textArea.getLineCount();
-                String lastLine = null;
-
-                if (lineCount > 0) {
-                    try {
-                        int endOffset = textArea.getLineEndOffset(lineCount - 1);
-                        int startOffset = textArea.getLineStartOffset(lineCount - 1);
-                        lastLine = textArea.getText(startOffset, endOffset - startOffset);
-                    } catch (BadLocationException ex) {
-                        ex.printStackTrace();
-                    }
-                }
-                
-
-                String level = lastLine;
-                switch (level) {
-                    case "Lv.1 可愛的人":
-                        textArea.append("\n");
-                        textArea.append("Lv.10 溫暖的人");
-                        accumulatedPoints -= 10;
-                        historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.10 溫暖的人!\n");
-                        level="Lv.10 溫暖的人";
-                        LvCombo.addItem("Lv.10 溫暖的人");
-                        break;
-                    case "Lv.10 溫暖的人":
-                        textArea.append("\n");
-                        textArea.append("Lv.20 可愛的天使");
-                        accumulatedPoints -= 20;
-                        historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.20 可愛的天使!\n");
-                        level="Lv.20 可愛的天使";
-                        LvCombo.addItem("Lv.20 可愛的天使");
-                        break;
-                    case "Lv.20 可愛的天使":
-                        textArea.append("\n");
-                        textArea.append("Lv.30 溫暖的天使");
-                        accumulatedPoints -= 30;
-                        historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.30 溫暖的天使!\n");
-                        level="Lv.30 溫暖的天使";
-                        LvCombo.addItem("Lv.30 溫暖的天使");
-
-                        break;
-                    case "Lv.30 溫暖的天使":
-                        textArea.append("\n");
-                        textArea.append("Lv.40 可愛的神");
-                        accumulatedPoints -= 40;
-                        historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.40 可愛的神!\n");
-                        level="Lv.40 可愛的神";
-                        LvCombo.addItem("Lv.40 可愛的神");
-
-                        break;
-                    case "Lv.40 可愛的神":
-                        textArea.append("\n");
-                        textArea.append("Lv.50 溫暖的神");
-                        accumulatedPoints -= 50;
-                        historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.50 溫暖的神!\n");
-                        level="Lv.50 溫暖的神";
-                        LvCombo.addItem("Lv.50 溫暖的神");
-                        break;
-                }
-                pointsLabel.setText("   累計點數: " + accumulatedPoints);
-
-                //歷史紀錄更新              
-                historyTextArea.append("你在____拿了____個____\n");
-                historyTextArea.append("你在____提供了____個____\n");
-                historyTextArea.append("xxx感謝了你!\n");
+		textArea.setEditable(false);
 
 
-                switch (level) {
-                case "Lv.1 可愛的人":
-                    if (accumulatedPoints > 10) {
-                        levelUpButton.setEnabled(true);
-                    }
-                    break;
-                case "Lv.10 溫暖的人":
-                    if (accumulatedPoints > 20) {
-                        levelUpButton.setEnabled(true);
-                    }
-                    break;
-                case "Lv.20 可愛的天使":
-                    if (accumulatedPoints > 30) {
-                        levelUpButton.setEnabled(true);
-                    }
-                    break;
-                case "Lv.30 溫暖的天使":
-                    if (accumulatedPoints > 40) {
-                        levelUpButton.setEnabled(true);
-                    }
-                    break;
-                case "Lv.40 可愛的神":
-                    if (accumulatedPoints > 50) {
-                        levelUpButton.setEnabled(true);
-                    }
-                    break;
-                }
-            }
-        });
+		histroyPanel = new JPanel();
+		histroyPanel.setBounds(10, 174, 288, 220);
+		rightPanel.add(histroyPanel);
+		histroyPanel.setLayout(null);
 
-      
+		JLabel label = new JLabel("歷史紀錄:");
+		label.setBounds(0, 0, 288, 30);
+		histroyPanel.add(label);
 
-        leftDown.add(levelUpButton, BorderLayout.EAST);
-        leftDown.add(pointsLabel, BorderLayout.CENTER);
-    }
+		historyTextArea = new JTextArea();
+		historyTextArea.setTabSize(7);
+		historyTextArea.setEditable(false);
+		
+		
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                JFrame frame = new JFrame("InfoPanel");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setContentPane(new InfoPanel());
-                frame.pack();
-                frame.setSize(600, 500);
-                frame.setVisible(true);
-            }
-        });
-    }
+		
+		//歷史紀錄更新:Take
+		
+		try {
+			if (FP.conn.isClosed())
+				FP.conn = DBConnector.getConnection();
+			
+    		Statement stat = FP.conn.createStatement();
+    		String query = "SELECT Thing, Quantity, Place FROM Take WHERE ID = " + user.getID();
+    		if (stat.execute(query)) {
+    			ResultSet result = stat.getResultSet();
+                System.out.println("Query 1");
+                List<String> formattedResults = showResultSet(result);
+                for (String res : formattedResults) {
+            		historyTextArea.append(res);
+    			}
+    		}
+    	}
+    	catch (SQLException se) {
+    		JOptionPane.showMessageDialog(null, se.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    	}
+		
+		
+		historyTextArea.append("你在____提供了____個____\n");
+
+		JScrollPane scrollPane = new JScrollPane(historyTextArea);
+		scrollPane.setBounds(0, 28, 288, 192);
+		histroyPanel.add(scrollPane);
+
+		add(mainPanel);
+		setVisible(true);
+	}
+		
+	
+
+	public void createBtn() {
+		
+		//升級標籤按鈕
+		levelUpButton = new JButton("Level up!");
+		
+		levelUpButton.setEnabled(false);
+		int lineCount = textArea.getLineCount();
+		String lastLine = null;
+		
+		if (lineCount > 0) {
+			try {
+				int endOffset = textArea.getLineEndOffset(lineCount - 1);
+				int startOffset = textArea.getLineStartOffset(lineCount - 1);
+				lastLine = textArea.getText(startOffset, endOffset - startOffset);
+			} catch (BadLocationException ex) {
+				ex.printStackTrace();
+			}
+		}
+		
+		
+		//確認按鈕的使用狀態
+		String level = lastLine;
+		switch (level) {
+		case "Lv.1 可愛的人":
+			if (accumulatedPoints >= 10) {
+				levelUpButton.setEnabled(true);
+			}
+			break;
+		case "Lv.10 溫暖的人":
+			if (accumulatedPoints >= 20) {
+				levelUpButton.setEnabled(true);
+			}
+			break;
+		case "Lv.20 可愛的天使":
+			if (accumulatedPoints >= 30) {
+				levelUpButton.setEnabled(true);
+			}
+			break;
+		case "Lv.30 溫暖的天使":
+			if (accumulatedPoints >= 40) {
+				levelUpButton.setEnabled(true);
+			}
+			break;
+		case "Lv.40 可愛的神":
+			if (accumulatedPoints >= 50) {
+				levelUpButton.setEnabled(true);
+			}
+			break;
+		}
+
+		levelUpButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				levelUpButton.setEnabled(false);
+				int lineCount = textArea.getLineCount();
+				String lastLine = null;
+
+				if (lineCount > 0) {
+					try {
+						int endOffset = textArea.getLineEndOffset(lineCount - 1);
+						int startOffset = textArea.getLineStartOffset(lineCount - 1);
+						lastLine = textArea.getText(startOffset, endOffset - startOffset);
+					} catch (BadLocationException ex) {
+						ex.printStackTrace();
+					}
+				}
+				
+				
+
+				String level = lastLine;
+				try {
+					Statement stat = FP.conn.createStatement();
+					String query = null;
+					
+					switch (level) {
+					case "Lv.1 可愛的人":
+						textArea.append("\n");
+						textArea.append("Lv.10 溫暖的人");
+						accumulatedPoints -= 10;
+						historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.10 溫暖的人!\n");
+						level = "Lv.10 溫暖的人";
+						LvCombo.addItem("Lv.10 溫暖的人");
+						query =  "UPDATE Profile SET Level = 'Lv.10 溫暖的人' WHERE ID = "+ user.getID();
+						break;
+					case "Lv.10 溫暖的人":
+						textArea.append("\n");
+						textArea.append("Lv.20 可愛的天使");
+						accumulatedPoints -= 20;
+						historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.20 可愛的天使!\n");
+						level = "Lv.20 可愛的天使";
+						LvCombo.addItem("Lv.20 可愛的天使");
+						query =  "UPDATE Profile SET Level = 'Lv.20 可愛的天使' WHERE ID = "+ user.getID();
+
+						break;
+					case "Lv.20 可愛的天使":
+						textArea.append("\n");
+						textArea.append("Lv.30 溫暖的天使");
+						accumulatedPoints -= 30;
+						historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.30 溫暖的天使!\n");
+						level = "Lv.30 溫暖的天使";
+						LvCombo.addItem("Lv.30 溫暖的天使");
+						query =  "UPDATE Profile SET Level = 'Lv.30 溫暖的天使' WHERE ID = "+ user.getID();
+
+
+						break;
+					case "Lv.30 溫暖的天使":
+						textArea.append("\n");
+						textArea.append("Lv.40 可愛的神");
+						accumulatedPoints -= 40;
+						historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.40 可愛的神!\n");
+						level = "Lv.40 可愛的神";
+						LvCombo.addItem("Lv.40 可愛的神");
+						query =  "UPDATE Profile SET Level = 'Lv.40 可愛的神' WHERE ID = "+ user.getID();
+
+						break;
+					case "Lv.40 可愛的神":
+						textArea.append("\n");
+						textArea.append("Lv.50 溫暖的神");
+						accumulatedPoints -= 50;
+						historyTextArea.append("感謝你為這世上增添了一份溫暖，\n恭喜你成為Lv.50 溫暖的神!\n");
+						level = "Lv.50 溫暖的神";
+						LvCombo.addItem("Lv.50 溫暖的神");
+						query =  "UPDATE Profile SET Level = 'Lv.50 溫暖的神' WHERE ID = "+ user.getID();
+
+						break;
+					}
+					
+					if (stat.execute(query)) {
+		    			ResultSet result = stat.getResultSet();
+		               
+		    			
+		    		}
+				}
+				catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+					
+				pointsLabel.setText("   累計點數: " + accumulatedPoints);
+
+				// 歷史紀錄更新
+				historyTextArea.append("你在____提供了____個____\n");
+				historyTextArea.append("xxx感謝了你!\n");
+
+				switch (level) {
+				case "Lv.1 可愛的人":
+					if (accumulatedPoints >= 10) {
+						levelUpButton.setEnabled(true);
+					}
+					break;
+				case "Lv.10 溫暖的人":
+					if (accumulatedPoints >= 20) {
+						levelUpButton.setEnabled(true);
+					}
+					break;
+				case "Lv.20 可愛的天使":
+					if (accumulatedPoints >= 30) {
+						levelUpButton.setEnabled(true);
+					}
+					break;
+				case "Lv.30 溫暖的天使":
+					if (accumulatedPoints >= 40) {
+						levelUpButton.setEnabled(true);
+					}
+					break;
+				case "Lv.40 可愛的神":
+					if (accumulatedPoints >= 50) {
+						levelUpButton.setEnabled(true);
+					}
+					break;
+				}
+			}
+		});
+
+		leftDown.add(levelUpButton, BorderLayout.EAST);
+		leftDown.add(pointsLabel, BorderLayout.CENTER);
+	}
+
+	public int getAccumulatedPoints() {
+		return this.accumulatedPoints;
+	}
+	
+	public void setAccumulatedPoint(int a) {
+		this.accumulatedPoints += a;
+	}
+	 public static List<String> showResultSet(ResultSet result) throws SQLException {
+	        ResultSetMetaData metaData = result.getMetaData();
+	        int columnCount = metaData.getColumnCount();
+	        List<String> formattedResults = new ArrayList<>();
+
+	        while (result.next()) {
+	            StringBuilder formattedResult = new StringBuilder();
+	            String place = result.getString("Place");
+	            String quantity = result.getString("Quantity");
+	            String thing = result.getString("Thing");
+	            switch(thing)  {
+	            case "LPad":
+	            	thing = "日用型衛生棉";
+					break;
+				case "NPad":
+					thing = "夜用型衛生棉";
+					break;
+				case "Pads":
+					thing = "護墊";
+					break;
+				case "Warmer":
+					thing = "暖暖包";
+					break;
+				case "Med":
+					thing = "止痛藥";
+					break;
+				}
+	            
+	            
+	            formattedResult.append("你在").append(place).append("拿了").append(quantity)
+	                           .append("個").append(thing).append("\n");
+	            
+	            formattedResults.add(formattedResult.toString());
+	        }
+	        return formattedResults;
+	    }
+
 }
