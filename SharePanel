@@ -8,6 +8,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.awt.event.ActionEvent;
+import java.util.Map;
 
 public class SharePanel extends JPanel {
 
@@ -18,7 +19,8 @@ public class SharePanel extends JPanel {
 	private JComboBox<String> placeCombo, itemCombo, quantityCombo;
 	private JButton offerBtn, takeBtn, needBtn, confirmBtn;
 	private static JTextArea AreaA, AreaB;
-
+	private Map<String, Integer> num_of_demands; 
+	
 	// constructor
 	public SharePanel(User u) {
 
@@ -48,6 +50,12 @@ public class SharePanel extends JPanel {
 		setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
 		add(Panel);
 
+		num_of_demands = new HashMap<>();
+		num_of_demands.put("LPad",0);
+		num_of_demands.put("NPad",0);
+		num_of_demands.put("Pads",0);
+		num_of_demands.put("Warmer",0);
+		num_of_demands.put("Med",0);
 	}
 
 	private void createLayout() {
@@ -307,7 +315,10 @@ public class SharePanel extends JPanel {
 					}
 					
 					//確認剩餘數量是否足夠拿
-					if(check >= quantity) {
+					if(number_of_demands.get(items)>=3){
+						JOptionPane.showMessageDialog(null, "拿過三次了", "Error", JOptionPane.ERROR_MESSAGE);
+					}
+					else if(check >= quantity) {
 						user.changedCurrentTake(quantity);
 
 						if (stat.execute(query)) {
@@ -327,6 +338,7 @@ public class SharePanel extends JPanel {
 						        showResultSet(result2, AreaA);
 						        // Close ResultSet
 						        result2.close();
+							number_of_demands.replace(item,number_of_demands.get(items)+1);
 						    }
 					
 					
